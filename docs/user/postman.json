@@ -1,0 +1,1125 @@
+{
+  "auth": {
+    "type": "noauth"
+  },
+  "info": {
+    "_postman_id": "7dcb510a-df25-42ab-9b68-0d185463aef5",
+    "name": "User Service API",
+    "description": "Collection for testing user-service HTTP endpoints.\n\nProtected endpoints use Bearer token from {{accessToken}}.\nInternal endpoints use X-API-KEY from {{internalApiKey}}.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Public",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{userBaseUrl}}/api/v1/health"
+          },
+          "response": []
+        },
+        {
+          "name": "Swagger UI",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{userBaseUrl}}/api/v1/swagger/index.html"
+          },
+          "response": []
+        },
+        {
+          "name": "Prometheus Metrics",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{userBaseUrl}}/metrics"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users (Public)",
+      "item": [
+        {
+          "name": "Register User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "try {",
+                  "  var json = pm.response.json();",
+                  "  if (json && json.data && json.data.tokenUUID) {",
+                  "    pm.environment.set(\"registrationTokenUUID\", String(json.data.tokenUUID));",
+                  "  }",
+                  "} catch (e) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contact\": {\n    \"type\": \"email\",\n    \"value\": \"{{userIdentifier}}\"\n  },\n  \"password\": \"{{userPassword}}\",\n  \"recaptcha\": \"{{userRecaptcha}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{userBaseUrl}}/api/v1/users/register"
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Contact",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tokenUUID\": \"{{registrationTokenUUID}}\",\n  \"code\": \"{{registrationCode}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{userBaseUrl}}/api/v1/users/verify-contact"
+          },
+          "response": []
+        },
+        {
+          "name": "Forgot Password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 202\", function () {",
+                  "  pm.response.to.have.status(202);",
+                  "});",
+                  "",
+                  "try {",
+                  "  var json = pm.response.json();",
+                  "  if (json && json.data && json.data.tokenUUID) {",
+                  "    pm.environment.set(\"passwordResetTokenUUID\", String(json.data.tokenUUID));",
+                  "  }",
+                  "} catch (e) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{userIdentifier}}\",\n  \"recaptcha\": \"{{userRecaptcha}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{userBaseUrl}}/api/v1/users/password/forgot"
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm Password Reset",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tokenUUID\": \"{{passwordResetTokenUUID}}\",\n  \"code\": \"{{passwordResetCode}}\",\n  \"newPassword\": \"{{newPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{userBaseUrl}}/api/v1/users/password/reset/confirm"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth (Public)",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "try {",
+                  "  var json = pm.response.json();",
+                  "  if (json && json.data) {",
+                  "    if (json.data.session) {",
+                  "      pm.environment.set(\"accessToken\", String(json.data.session.accessToken || \"\"));",
+                  "      pm.environment.set(\"refreshToken\", String(json.data.session.refreshToken || \"\"));",
+                  "      pm.environment.set(\"sessionId\", String(json.data.session.sessionId || \"\"));",
+                  "    }",
+                  "    pm.environment.set(\"loginRequires2FA\", String(Boolean(json.data.requires2fa)));",
+                  "    if (json.data.twoFactorChallenge && json.data.twoFactorChallenge.tokenUUID) {",
+                  "      pm.environment.set(\"loginChallengeTokenUUID\", String(json.data.twoFactorChallenge.tokenUUID));",
+                  "    }",
+                  "  }",
+                  "} catch (e) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{userIdentifier}}\",\n  \"password\": \"{{userPassword}}\",\n  \"recaptcha\": \"{{userRecaptcha}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{userBaseUrl}}/api/v1/auth/login"
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm Login Challenge",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "try {",
+                  "  var json = pm.response.json();",
+                  "  if (json && json.data && json.data.session) {",
+                  "    pm.environment.set(\"accessToken\", String(json.data.session.accessToken || \"\"));",
+                  "    pm.environment.set(\"refreshToken\", String(json.data.session.refreshToken || \"\"));",
+                  "    pm.environment.set(\"sessionId\", String(json.data.session.sessionId || \"\"));",
+                  "  }",
+                  "} catch (e) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tokenUUID\": \"{{loginChallengeTokenUUID}}\",\n  \"code\": \"{{loginChallengeCode}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{userBaseUrl}}/api/v1/auth/login/challenge/confirm"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2FA (Public)",
+      "item": [
+        {
+          "name": "Resend OTP Challenge",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "try {",
+                  "  var json = pm.response.json();",
+                  "  if (json && json.data && json.data.tokenUUID) {",
+                  "    pm.environment.set(\"twoFactorTokenUUID\", String(json.data.tokenUUID));",
+                  "  }",
+                  "} catch (e) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tokenUUID\": \"{{twoFactorTokenUUID}}\",\n  \"tokenType\": \"{{publicOtpTokenType}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{userBaseUrl}}/api/v1/2fa/otp/resend"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users (Protected)",
+      "item": [
+        {
+          "name": "Get Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "type": "string",
+                  "value": "{{accessToken}}"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{userBaseUrl}}/api/v1/users/get-profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "type": "string",
+                  "value": "{{accessToken}}"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Robert\",\n  \"lastName\": \"Vex\",\n  \"dob\": \"1986-01-02\",\n  \"address\": \"Kyiv, Ukraine, 01001, Khreshchatyk 1\",\n  \"locale\": \"en_US\",\n  \"timezone\": \"Europe/Kyiv\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{userBaseUrl}}/api/v1/users/update-profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "type": "string",
+                  "value": "{{accessToken}}"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"{{currentPassword}}\",\n  \"newPassword\": \"{{newPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{userBaseUrl}}/api/v1/users/password-change"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth (Protected)",
+      "item": [
+        {
+          "name": "Me",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "try {",
+                  "  var json = pm.response.json();",
+                  "  if (json && json.data && json.data.userNumber) {",
+                  "    pm.environment.set(\"userNumber\", String(json.data.userNumber));",
+                  "  }",
+                  "} catch (e) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "type": "string",
+                  "value": "{{accessToken}}"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{userBaseUrl}}/api/v1/auth/me"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "type": "string",
+                  "value": "{{accessToken}}"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": "{{userBaseUrl}}/api/v1/auth/logout"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout All",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "type": "string",
+                  "value": "{{accessToken}}"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": "{{userBaseUrl}}/api/v1/auth/logout-all"
+          },
+          "response": []
+        },
+        {
+          "name": "List Active Sessions",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "type": "string",
+                  "value": "{{accessToken}}"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{userBaseUrl}}/api/v1/auth/sessions"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Session",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "type": "string",
+                  "value": "{{accessToken}}"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": "{{userBaseUrl}}/api/v1/auth/sessions/{{sessionId}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "try {",
+                  "  var json = pm.response.json();",
+                  "  if (json && json.data && json.data.session) {",
+                  "    pm.environment.set(\"accessToken\", String(json.data.session.accessToken || \"\"));",
+                  "    pm.environment.set(\"refreshToken\", String(json.data.session.refreshToken || \"\"));",
+                  "    pm.environment.set(\"sessionId\", String(json.data.session.sessionId || \"\"));",
+                  "  }",
+                  "} catch (e) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "type": "string",
+                  "value": "{{accessToken}}"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{userBaseUrl}}/api/v1/auth/sessions/refresh"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2FA (Protected)",
+      "item": [
+        {
+          "name": "Activate 2FA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 202\", function () {",
+                  "  pm.response.to.have.status(202);",
+                  "});",
+                  "",
+                  "try {",
+                  "  var json = pm.response.json();",
+                  "  if (json && json.data && json.data.tokenUUID) {",
+                  "    pm.environment.set(\"twoFactorTokenUUID\", String(json.data.tokenUUID));",
+                  "  }",
+                  "} catch (e) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "type": "string",
+                  "value": "{{accessToken}}"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"method\": \"{{twoFactorMethod}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{userBaseUrl}}/api/v1/2fa/activate"
+          },
+          "response": []
+        },
+        {
+          "name": "Deactivate 2FA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 202\", function () {",
+                  "  pm.response.to.have.status(202);",
+                  "});",
+                  "",
+                  "try {",
+                  "  var json = pm.response.json();",
+                  "  if (json && json.data && json.data.tokenUUID) {",
+                  "    pm.environment.set(\"twoFactorTokenUUID\", String(json.data.tokenUUID));",
+                  "  }",
+                  "} catch (e) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "type": "string",
+                  "value": "{{accessToken}}"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": "{{userBaseUrl}}/api/v1/2fa/deactivate"
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm 2FA Challenge",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "type": "string",
+                  "value": "{{accessToken}}"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tokenUUID\": \"{{twoFactorTokenUUID}}\",\n  \"code\": \"{{twoFactorCode}}\",\n  \"action\": \"activate\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{userBaseUrl}}/api/v1/2fa/confirm"
+          },
+          "response": []
+        },
+        {
+          "name": "Get 2FA Settings",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "type": "string",
+                  "value": "{{accessToken}}"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{userBaseUrl}}/api/v1/2fa/settings"
+          },
+          "response": []
+        },
+        {
+          "name": "Resend 2FA Challenge",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "try {",
+                  "  var json = pm.response.json();",
+                  "  if (json && json.data && json.data.tokenUUID) {",
+                  "    pm.environment.set(\"twoFactorTokenUUID\", String(json.data.tokenUUID));",
+                  "  }",
+                  "} catch (e) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "type": "string",
+                  "value": "{{accessToken}}"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tokenUUID\": \"{{twoFactorTokenUUID}}\",\n  \"tokenType\": \"{{protected2FATokenType}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{userBaseUrl}}/api/v1/2fa/challenge/resend"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Verifications (Protected)",
+      "item": [
+        {
+          "name": "Init Verification",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "type": "string",
+                  "value": "{{accessToken}}"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": "{{userBaseUrl}}/api/v1/verifications/init"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Webhooks",
+      "item": [
+        {
+          "name": "AML Bot Webhook",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-data-integrity",
+                "value": "{{amlBotSignature}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"{{amlBotType}}\",\n  \"verified\": {{amlBotVerified}},\n  \"status\": \"{{amlBotStatus}}\",\n  \"applicant\": {\n    \"external_applicant_id\": \"{{amlBotExternalApplicantId}}\",\n    \"first_name\": \"Robert\",\n    \"last_name\": \"Vex\",\n    \"dob\": \"1986-01-02\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{userBaseUrl}}/api/v1/verifications/aml-bot/webhook"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Internal",
+      "item": [
+        {
+          "name": "Delete Session By Admin",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-API-KEY",
+                "value": "{{internalApiKey}}"
+              }
+            ],
+            "url": "{{userBaseUrl}}/api/v1/internal/sessions/{{sessionId}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Validate Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "try {",
+                  "  var json = pm.response.json();",
+                  "  if (json && json.data && json.data.user && json.data.user.id) {",
+                  "    pm.environment.set(\"userId\", String(json.data.user.id));",
+                  "  }",
+                  "} catch (e) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-KEY",
+                "value": "{{internalApiKey}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{accessToken}}\",\n  \"isExpiredValidationSkip\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{userBaseUrl}}/api/v1/internal/sessions/validate"
+          },
+          "response": []
+        },
+        {
+          "name": "Block User",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-KEY",
+                "value": "{{internalApiKey}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{userBaseUrl}}/api/v1/internal/users/block"
+          },
+          "response": []
+        },
+        {
+          "name": "Publish User Created Event",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-KEY",
+                "value": "{{internalApiKey}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"type\": \"register\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{userBaseUrl}}/api/v1/internal/users/events"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "userBaseUrl",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
+      "key": "sessionId",
+      "value": ""
+    },
+    {
+      "key": "registrationTokenUUID",
+      "value": ""
+    },
+    {
+      "key": "registrationCode",
+      "value": ""
+    },
+    {
+      "key": "passwordResetTokenUUID",
+      "value": ""
+    },
+    {
+      "key": "passwordResetCode",
+      "value": ""
+    },
+    {
+      "key": "loginChallengeTokenUUID",
+      "value": ""
+    },
+    {
+      "key": "loginChallengeCode",
+      "value": ""
+    },
+    {
+      "key": "loginRequires2FA",
+      "value": "false"
+    },
+    {
+      "key": "twoFactorTokenUUID",
+      "value": ""
+    },
+    {
+      "key": "twoFactorCode",
+      "value": ""
+    },
+    {
+      "key": "publicOtpTokenType",
+      "value": "verify_contact"
+    },
+    {
+      "key": "protected2FATokenType",
+      "value": "two_factor_setup"
+    },
+    {
+      "key": "twoFactorMethod",
+      "value": "email"
+    },
+    {
+      "key": "currentPassword",
+      "value": ""
+    },
+    {
+      "key": "newPassword",
+      "value": ""
+    },
+    {
+      "key": "internalApiKey",
+      "value": ""
+    },
+    {
+      "key": "userId",
+      "value": "1"
+    },
+    {
+      "key": "userNumber",
+      "value": ""
+    },
+    {
+      "key": "amlBotSignature",
+      "value": ""
+    },
+    {
+      "key": "amlBotExternalApplicantId",
+      "value": ""
+    },
+    {
+      "key": "amlBotVerified",
+      "value": "true"
+    },
+    {
+      "key": "amlBotStatus",
+      "value": "completed"
+    },
+    {
+      "key": "amlBotType",
+      "value": "VERIFICATION_COMPLETED"
+    }
+  ]
+}

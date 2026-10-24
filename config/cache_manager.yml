@@ -1,0 +1,6 @@
+global_cache_config:
+  size:     1073741824 # 1GB
+  max_keys: 1e6        # 1M
+cached_entities:
+  revoked_session:
+    remote_cache: true

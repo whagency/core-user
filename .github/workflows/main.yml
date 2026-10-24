@@ -1,0 +1,117 @@
+name: Deploy user service
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build image
+        env:
+          PRIVATE_REPO_GITHUB_TOKEN: ${{ secrets.PRIVATE_REPO_GITHUB_TOKEN }}
+        run: |
+          docker build \
+            --secret id=github_token,env=PRIVATE_REPO_GITHUB_TOKEN \
+            -t fin-user:latest \
+            -f ./docker/production/Dockerfile \
+            .
+          docker save fin-user:latest -o ./fin-user.tar
+          chmod 644 ./fin-*.tar
+
+      - name: Copy image to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ vars.SERVER_HOST }}
+          username: ${{ vars.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+          source: "fin-*.tar"
+          target: "/var/www/deploy/"
+
+      - name: Deploy on server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ vars.SERVER_HOST }}
+          username: ${{ vars.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+          script: |
+            docker network create \
+              --driver bridge \
+              --subnet=172.28.0.0/16 \
+              --ip-range=172.28.0.128/25 \
+              fin_network || true
+            
+            docker load -i /var/www/deploy/fin-user.tar
+            docker stop fin_user || true
+            docker rm fin_user || true
+            
+            cat > /var/www/deploy/user.env <<EOF
+            DB_HOST=${{ vars.DB_HOST }}
+            DB_PORT=${{ vars.DB_PORT }}
+            DB_NAME=${{ vars.DB_NAME }}
+            DB_USER=${{ vars.DB_USER }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            SECURITY_TOKEN=${{ secrets.SECURITY_TOKEN }}
+            JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET }}
+            JWT_ADDITIONAL_ISSUERS=${{ vars.JWT_ADDITIONAL_ISSUERS || 'admin-service' }}
+            OTP_SECRET_PEPPER=${{ secrets.OTP_SECRET_PEPPER }}
+            APP_NAME=${{ vars.APP_NAME }}
+            APP_ENVIRONMENT=${{ vars.APP_ENVIRONMENT }}
+            CACHE_HOST=${{ vars.CACHE_HOST }}
+            CACHE_CLUSTER_NAME=${{ vars.CACHE_CLUSTER_NAME }}
+            QUEUE_HOST=${{ vars.QUEUE_HOST }}
+            QUEUE_PORT=${{ vars.QUEUE_PORT }}
+            QUEUE_USER=${{ vars.QUEUE_USER }}
+            QUEUE_PASSWORD=${{ secrets.QUEUE_PASSWORD }}
+            AML_BOT_URL=${{ vars.AML_BOT_URL }}
+            AML_BOT_API_TOKEN=${{ vars.AML_BOT_API_TOKEN }}
+            AML_BOT_FORM_ID_BASIC=${{ vars.AML_BOT_FORM_ID_BASIC }}
+            AML_BOT_FORM_ID_ADVANCED=${{ vars.AML_BOT_FORM_ID_ADVANCED }}
+            AML_BOT_FORM_ID_PRO=${{ vars.AML_BOT_FORM_ID_PRO }}
+            LOG_LEVEL=${{ vars.LOG_LEVEL }}
+            LOG_STDOUT_FORMAT=${{ vars.LOG_STDOUT_FORMAT }}
+            LOG_HTTP_NOT_LOGGABLE_PATHS=${{ vars.LOG_HTTP_NOT_LOGGABLE_PATHS }}
+            RESTRICTION_SERVICE_URL=${{ vars.RESTRICTION_SERVICE_URL }}
+            RESTRICTION_SERVICE_GRPC_URL=${{ vars.RESTRICTION_SERVICE_GRPC_URL }}
+            RECAPTCHA_SECRET_KEY=${{ vars.RECAPTCHA_SECRET_KEY }}
+            TRACER_ENABLE=${{ vars.TRACER_ENABLE }}
+            TRACER_PROTOCOL=${{ vars.TRACER_PROTOCOL }}
+            TRACER_ENDPOINT=${{ vars.TRACER_ENDPOINT }}
+            TRACER_SAMPLE_RATIO=${{ vars.TRACER_SAMPLE_RATIO }}
+            TRACER_HTTP_NOT_TRACEABLE_PATHS=${{ vars.TRACER_HTTP_NOT_TRACEABLE_PATHS }}
+            DB_LOG_TRACE_STATEMENT_ALWAYS=${{ vars.DB_LOG_TRACE_STATEMENT_ALWAYS }}
+            EOF
+            
+            docker run --rm \
+              --network fin_network \
+              --env-file /var/www/deploy/user.env \
+              fin-user:latest \
+              migrate --command=up
+            
+            docker run -d \
+              --name fin_user \
+              --restart always \
+              -p "127.0.0.1:${{ vars.USER_PORT }}:8000" \
+              --env-file /var/www/deploy/user.env \
+              --log-driver gelf \
+              --log-opt gelf-address=udp://${{ vars.LOG_LOGSTASH_GELF_HOST }} \
+              --log-opt tag=${{ vars.APP_NAME }} \
+              --network fin_network \
+              fin-user:latest
+  
+            docker cp fin_user:/app/docs/user/swagger.json /var/www/deploy/user.json
+            
+            docker run --rm \
+              -v fin_docs_data_prod:/app/shared-docs \
+              -v /var/www/deploy:/tmp/deploy:ro alpine \
+              sh -c "cp -r /tmp/deploy/* /app/shared-docs"
+              
+            rm /var/www/deploy/fin-user.tar
+            rm /var/www/deploy/user.env
+            rm /var/www/deploy/user.json

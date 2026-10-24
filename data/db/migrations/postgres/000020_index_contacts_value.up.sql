@@ -1,0 +1,11 @@
+-- Index the lookups that sign-in and password recovery run.
+--
+-- Both filter on value alone (FindByValue, FindPrimaryByValue). The only index
+-- containing the column was UNIQUE (type, value), and a composite index cannot
+-- serve a predicate that does not constrain its leading column -- so every
+-- sign-in and every recovery request scanned the whole contacts table.
+--
+-- CONCURRENTLY so the build takes no write lock on a live table. It cannot run
+-- inside a transaction block, which is why this migration holds exactly one
+-- statement and nothing else.
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_contacts_value ON contacts (value);

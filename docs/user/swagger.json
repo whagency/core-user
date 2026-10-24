@@ -1,0 +1,2734 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "### 📘 User Service API\nProvides identity, authentication, profile management, session lifecycle, two-factor authentication, password recovery, and KYC verification orchestration.\n### 🔑 Authentication\nSome endpoints require an **Authorization** header:\n\n```http\nAuthorization: Bearer \u003ctoken\u003e\n```",
+        "title": "User Service",
+        "contact": {},
+        "version": "1.0.0"
+    },
+    "host": "https://api.app-stage.pro",
+    "basePath": "/user/",
+    "paths": {
+        "/api/v1/2fa/activate": {
+            "post": {
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ],
+                "description": "Issues a challenge to activate two-factor authentication using the specified method.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "2FA"
+                ],
+                "summary": "Activate two-factor authentication",
+                "parameters": [
+                    {
+                        "description": "Two-factor activation payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_handlers_two_fa_protected.twoFactorActivateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Challenge issued.",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/user-service_internal_transport_http_handlers_two_fa.TwoFactorChallengeResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Malformed JSON payload or unsupported method.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid access token.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "User or contact method not found.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "409": {
+                        "description": "Two-factor authentication already enabled.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "422": {
+                        "description": "Validation errors in the request body.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to issue the activation challenge due to internal errors.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/2fa/challenge/resend": {
+            "post": {
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ],
+                "description": "Issues a new OTP for two-factor authentication challenges",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "2FA"
+                ],
+                "summary": "Resend 2FA OTP challenge",
+                "parameters": [
+                    {
+                        "description": "OTP challenge resend payload",
+                        "name": "json",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_handlers_two_fa_protected.challengeResendRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OTP resent",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/user-service_internal_transport_http_handlers_two_fa.TwoFactorChallengeResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Body bad format",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Token not found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "409": {
+                        "description": "Concurrency conflict",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "429": {
+                        "description": "Resend rate limited",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/2fa/confirm": {
+            "post": {
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ],
+                "description": "Confirms a two-factor authentication challenge using the provided code.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "2FA"
+                ],
+                "summary": "Confirm two-factor authentication",
+                "parameters": [
+                    {
+                        "description": "Two-factor confirmation payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_handlers_two_fa_protected.twoFactorConfirmRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Two-factor settings updated.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Malformed JSON payload.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid access token or challenge code.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "User or challenge not found.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "409": {
+                        "description": "Concurrency conflict while confirming the challenge.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "422": {
+                        "description": "Validation errors in the request body.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "429": {
+                        "description": "Maximum verification attempts exceeded.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to update the two-factor settings due to internal errors.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/2fa/deactivate": {
+            "post": {
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ],
+                "description": "Initiates the flow to disable two-factor authentication for the authenticated user.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "2FA"
+                ],
+                "summary": "Deactivate two-factor authentication",
+                "responses": {
+                    "202": {
+                        "description": "Challenge issued.",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/user-service_internal_transport_http_handlers_two_fa.TwoFactorChallengeResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid access token.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Two-factor settings not found.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to issue the deactivation challenge due to internal errors.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/2fa/otp/resend": {
+            "post": {
+                "description": "Issues a new OTP for contact verification, login challenges, or password recovery tokens",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "2FA"
+                ],
+                "summary": "Resend OTP challenge",
+                "parameters": [
+                    {
+                        "description": "OTP challenge resend payload",
+                        "name": "json",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_handlers_two_fa.challengeResendRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OTP resent",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_transport_http_handlers_two_fa.TwoFactorChallengeResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Body bad format",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Token not found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "409": {
+                        "description": "Concurrency conflict",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "429": {
+                        "description": "Resend rate limited",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/2fa/settings": {
+            "get": {
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ],
+                "description": "Retrieves the current two-factor authentication settings for the authenticated user.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "2FA"
+                ],
+                "summary": "Get two-factor authentication settings",
+                "responses": {
+                    "200": {
+                        "description": "Two-factor settings retrieved.",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_transport_http_handlers_two_fa_protected.twoFactorSettingsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid access token.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Two-factor settings not found.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to load settings due to internal errors.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/login": {
+            "post": {
+                "description": "Authenticates a user via email or phone and password. Returns either session tokens or a 2FA challenge when an additional factor is required.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Authenticate with primary contact and password",
+                "parameters": [
+                    {
+                        "description": "Login payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_handlers_auth.loginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Authentication succeeded. Requires2FA=true when a secondary challenge must be completed.",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_transport_http_handlers_auth.loginResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Malformed JSON payload.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials or expired authentication challenge.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "Account pending verification, blocked, contact unverified, or password rotation required.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "409": {
+                        "description": "Two-factor authentication already provisioned for the account.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "422": {
+                        "description": "Validation errors in the request body.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected internal error while processing the login request.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/login/challenge/confirm": {
+            "post": {
+                "description": "Verifies a one-time 2FA challenge issued during login and, on success, returns fresh session tokens.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Confirm login challenge",
+                "parameters": [
+                    {
+                        "description": "Login challenge payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_handlers_auth.loginChallengeConfirmRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Challenge resolved and session issued.",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_transport_http_handlers_auth.loginChallengeConfirmResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Malformed JSON payload.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid or expired challenge code.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Challenge or user record not found.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "409": {
+                        "description": "Concurrency conflict while consuming the challenge.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "422": {
+                        "description": "Validation errors in the request body.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "429": {
+                        "description": "Maximum verification attempts exceeded.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected error while issuing the session.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/logout": {
+            "post": {
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ],
+                "description": "Invalidates the access token and removes the refresh token associated with the caller's session.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Logout current session",
+                "responses": {
+                    "200": {
+                        "description": "Session successfully revoked.",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_transport_http_handlers_auth.logoutResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid access token.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to revoke the session due to internal issues.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/logout-all": {
+            "post": {
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ],
+                "description": "Revokes all sessions for the authenticated user, invalidating every refresh token on record.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Logout from all sessions",
+                "responses": {
+                    "200": {
+                        "description": "All sessions revoked.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid access token.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Unable to revoke sessions due to internal issues.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/me": {
+            "get": {
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ],
+                "description": "Returns the authenticated user's details, including primary contact and profile information.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Get current user",
+                "responses": {
+                    "200": {
+                        "description": "Current user data.",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_transport_http_handlers_auth.meResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid access token.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "User or related information not found.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected error while retrieving user information.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/sessions": {
+            "get": {
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ],
+                "description": "Retrieves active sessions for the authenticated user including device and geo metadata.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "List active sessions",
+                "responses": {
+                    "200": {
+                        "description": "List of active sessions.",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_transport_http_handlers_sessions.listSessionsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid access token.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Unable to retrieve sessions due to internal issues.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/sessions/refresh": {
+            "post": {
+                "description": "Issues new access and refresh tokens for a valid session when presented with a valid refresh token.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Refresh session tokens",
+                "parameters": [
+                    {
+                        "description": "Session refresh payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_handlers_sessions.refreshSessionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Session refreshed.",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_transport_http_handlers_sessions.refreshSessionResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Missing session identifier or malformed payload.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid or expired refresh token.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "422": {
+                        "description": "Validation errors in the request body.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to refresh the session due to internal errors.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/sessions/{sessionId}": {
+            "delete": {
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ],
+                "description": "Revokes a specific session by its identifier. Only sessions owned by the caller can be revoked.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Revoke a session",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session identifier",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Session revoked.",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_transport_http_handlers_sessions.deleteSessionResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Missing or malformed session identifier.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid access token.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "Session does not belong to the authenticated user.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found or already revoked.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to revoke the session due to internal errors.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/internal/sessions/validate": {
+            "post": {
+                "description": "Validates a session token and returns basic user information for internal services.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "internal"
+                ],
+                "summary": "Validate a user session token",
+                "parameters": [
+                    {
+                        "description": "Session token payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_handlers_sessions_internals.validateSessionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Session is valid.",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_transport_http_handlers_sessions_internals.validateSessionResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Missing or malformed request payload.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Session token is invalid or expired.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to validate the session due to internal errors.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/internal/sessions/{sessionId}": {
+            "delete": {
+                "description": "Allows privileged callers to revoke any user session by its identifier without ownership checks.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "internal"
+                ],
+                "summary": "Revoke a session (admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session identifier",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Session revoked.",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_transport_http_handlers_sessions_internals.deleteSessionResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Missing or malformed session identifier.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid administrative credentials.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found or already revoked.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to revoke the session due to internal errors.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/internal/users/block": {
+            "post": {
+                "description": "Blocks the user account and revokes every session it holds, both in one transaction.\nReturns 404 when no user has that id, rather than reporting success for a block that never happened.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "internal"
+                ],
+                "summary": "Logout from all sessions and block user",
+                "parameters": [
+                    {
+                        "description": "User ID payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_handlers_users_internals.blockUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User logged out from all sessions and blocked.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Missing or malformed request payload.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid administrative credentials.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "No user with that id.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to logout and block user due to internal errors.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/internal/users/events": {
+            "post": {
+                "description": "Triggers the new user registration event.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "internal"
+                ],
+                "summary": "Triggers the new user registration event",
+                "parameters": [
+                    {
+                        "description": "User registration payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_handlers_users_internals.registerEventRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Malformed JSON payload.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "422": {
+                        "description": "Validation errors in the request body.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to trigger the event due to internal errors.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/get-profile": {
+            "get": {
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ],
+                "description": "Return the authenticated user's profile attributes and latest verification request metadata.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get user's profile data",
+                "responses": {
+                    "200": {
+                        "description": "User's profile data.",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_transport_http_handlers_users_protected.getProfileResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid access token.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed getting the profile due to internal errors.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/password-change": {
+            "post": {
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ],
+                "description": "Rotates the authenticated user's password and revokes every other session of the user.\nThe session making the request stays valid, so the caller keeps its access and refresh tokens.\nAll other devices are signed out and their refresh tokens stop working immediately.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Change password",
+                "parameters": [
+                    {
+                        "description": "Password change payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_handlers_users_protected.passwordChangeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Password updated.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Malformed JSON payload.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid access token or incorrect current password.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "Password reuse policy violation.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "User credentials not found.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "422": {
+                        "description": "Validation errors in the request body.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to change the password due to internal errors.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/password/forgot": {
+            "post": {
+                "description": "Initiates the password recovery flow and sends an OTP to the user's verified primary contact.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Forgot password",
+                "parameters": [
+                    {
+                        "description": "Password recovery payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_handlers_users.passwordForgotRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Recovery challenge issued.",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_transport_http_handlers_users.passwordForgotResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Malformed JSON payload.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unknown account or invalid credentials.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "Account blocked or primary contact unverified.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "409": {
+                        "description": "Pending recovery challenge already exists.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "422": {
+                        "description": "Validation errors in the request body.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to create the recovery challenge due to internal errors.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/password/reset/confirm": {
+            "post": {
+                "description": "Verifies the password reset OTP and rotates the user's credentials. Any active sessions are revoked.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Confirm password reset",
+                "parameters": [
+                    {
+                        "description": "Password reset payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_handlers_users.passwordResetConfirmRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Password updated successfully.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Malformed JSON payload.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid or expired verification code.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Password reset challenge not found.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "409": {
+                        "description": "Concurrency conflict while validating the challenge.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "422": {
+                        "description": "Validation errors in the request body.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "429": {
+                        "description": "Maximum verification attempts exceeded.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to reset the password due to internal errors.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/register": {
+            "post": {
+                "description": "Registers a new user, provisions credentials, and issues a contact verification challenge.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Create a new user",
+                "parameters": [
+                    {
+                        "description": "Registration payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_handlers_users.userRegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "User created and verification challenge issued.",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_transport_http_handlers_users.userRegisterResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Malformed payload or unsupported contact type.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "409": {
+                        "description": "Contact already registered or active verification in progress.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "422": {
+                        "description": "Validation errors in the request body.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to persist user data due to internal errors.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/update-profile": {
+            "patch": {
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ],
+                "description": "Updates the authenticated user's profile metadata (name, locale, and preferences).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Update profile",
+                "parameters": [
+                    {
+                        "description": "Update profile payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_handlers_users_protected.updateProfileRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Profile updated.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Malformed JSON payload.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid access token.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Profile not found.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "422": {
+                        "description": "Validation errors in the request body.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to update the profile due to internal errors.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/verify-contact": {
+            "post": {
+                "description": "Confirms the registration OTP and activates the user's account and primary contact.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Verify primary contact",
+                "parameters": [
+                    {
+                        "description": "Contact verification payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_handlers_users.verifyContactRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Contact verified.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Malformed JSON payload.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid or expired verification code.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Verification challenge not found.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "409": {
+                        "description": "Contact already verified or concurrency conflict detected.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "422": {
+                        "description": "Validation errors in the request body.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "429": {
+                        "description": "Maximum verification attempts exceeded.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to verify the contact due to internal errors.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/verifications/aml-bot/webhook": {
+            "post": {
+                "description": "Url for updating user verification status for remote KYC service",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "verifications"
+                ],
+                "summary": "KYC service postback url",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Signature used to verify the integrity of the payload.",
+                        "name": "x-data-integrity",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Postback payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_handlers_verifications_webhooks.amlBotWebhookRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/api/v1/verifications/init": {
+            "post": {
+                "description": "Requests a KYC verification for an unverified user.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "verifications"
+                ],
+                "summary": "Initialize KYC verification",
+                "responses": {
+                    "200": {
+                        "description": "Verification created and returned external form link.",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_transport_http_handlers_verifications_protected.verificationInitResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Error requesting external KYC service.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid access token.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "409": {
+                        "description": "User already verified or verification in progress.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to save verification data due to internal errors.",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_whagency_common_http.Response"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "github_com_whagency_common_http.Response": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "0 indicates success, \u003e 0 indicates an error",
+                    "type": "integer"
+                },
+                "data": {
+                    "description": "The actual response data object",
+                    "type": "object"
+                },
+                "message": {
+                    "description": "\"success\" for successful responses, error message for errors",
+                    "type": "string"
+                },
+                "meta": {
+                    "description": "Metadata about the response",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/http.metaResponse"
+                        }
+                    ]
+                }
+            }
+        },
+        "http.metaResponse": {
+            "type": "object",
+            "properties": {
+                "requestId": {
+                    "type": "string",
+                    "example": "010a0998-4b1a-4e70-a951-d27a40b49c0c"
+                },
+                "timestamp": {
+                    "type": "string",
+                    "example": "2025-10-07T12:00:45.327647382Z"
+                }
+            }
+        },
+        "internal_transport_http_handlers_auth.loginChallengeConfirmRequest": {
+            "type": "object",
+            "required": [
+                "code",
+                "tokenUUID"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "maxLength": 12,
+                    "minLength": 4,
+                    "example": "331710"
+                },
+                "tokenUUID": {
+                    "type": "string",
+                    "example": "06fd3021-b659-44e2-b86c-d45ec3fc75ac"
+                }
+            }
+        },
+        "internal_transport_http_handlers_auth.loginChallengeConfirmResponse": {
+            "type": "object",
+            "properties": {
+                "session": {
+                    "$ref": "#/definitions/user-service_internal_transport_http_handlers_sessions.SessionResponse"
+                }
+            }
+        },
+        "internal_transport_http_handlers_auth.loginRequest": {
+            "type": "object",
+            "required": [
+                "identifier",
+                "password",
+                "recaptcha"
+            ],
+            "properties": {
+                "identifier": {
+                    "description": "email or phone",
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 5,
+                    "example": "email"
+                },
+                "password": {
+                    "description": "password",
+                    "type": "string",
+                    "example": "password"
+                },
+                "recaptcha": {
+                    "description": "recaptcha",
+                    "type": "string",
+                    "example": "recaptcha_token"
+                }
+            }
+        },
+        "internal_transport_http_handlers_auth.loginResponse": {
+            "type": "object",
+            "properties": {
+                "requires2fa": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "session": {
+                    "$ref": "#/definitions/user-service_internal_transport_http_handlers_sessions.SessionResponse"
+                },
+                "twoFactorChallenge": {
+                    "$ref": "#/definitions/user-service_internal_transport_http_handlers_two_fa.TwoFactorChallengeResponse"
+                }
+            }
+        },
+        "internal_transport_http_handlers_auth.logoutResponse": {
+            "type": "object",
+            "properties": {
+                "sessionId": {
+                    "type": "string",
+                    "example": "06fd3021-b659-44e2-b86c-d45ec3fc75ac"
+                }
+            }
+        },
+        "internal_transport_http_handlers_auth.meContactResponse": {
+            "type": "object",
+            "properties": {
+                "isPrimary": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "status": {
+                    "type": "string",
+                    "example": "verified"
+                },
+                "type": {
+                    "type": "string",
+                    "example": "email"
+                },
+                "value": {
+                    "type": "string",
+                    "example": "test.email@gmail.com"
+                },
+                "verifiedAt": {
+                    "type": "string",
+                    "example": "2026-03-02T06:31:43Z"
+                }
+            }
+        },
+        "internal_transport_http_handlers_auth.meLastVerificationRequestResponse": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string",
+                    "example": "2026-03-02T06:31:43Z"
+                },
+                "formUrl": {
+                    "type": "string",
+                    "example": "https://kyc-forms-new.amlbot.com/qbcyr943yvr83qyt93y9y49y8v39y49yv94"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "complete_yes"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "example": "2026-03-02T06:31:43Z"
+                }
+            }
+        },
+        "internal_transport_http_handlers_auth.meProfileResponse": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "example": "Dnipro, Ukraine, 01000, Bulvar 1, 1-ya st., 10"
+                },
+                "country": {
+                    "type": "string",
+                    "example": "Ukraine"
+                },
+                "dateOfBirth": {
+                    "type": "string",
+                    "example": "1983-03-02"
+                },
+                "firstName": {
+                    "type": "string",
+                    "example": "Robert"
+                },
+                "lastName": {
+                    "type": "string",
+                    "example": "Vex"
+                },
+                "locale": {
+                    "type": "string",
+                    "example": "uk_UA"
+                },
+                "timezone": {
+                    "type": "string",
+                    "example": "Europe/Kiev"
+                }
+            }
+        },
+        "internal_transport_http_handlers_auth.meResponse": {
+            "type": "object",
+            "properties": {
+                "contact": {
+                    "$ref": "#/definitions/internal_transport_http_handlers_auth.meContactResponse"
+                },
+                "lastPasswordChangeAt": {
+                    "type": "string",
+                    "example": "2026-03-02T06:31:43Z"
+                },
+                "lastUserVerificationRequest": {
+                    "$ref": "#/definitions/internal_transport_http_handlers_auth.meLastVerificationRequestResponse"
+                },
+                "profile": {
+                    "$ref": "#/definitions/internal_transport_http_handlers_auth.meProfileResponse"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "verified"
+                },
+                "userNumber": {
+                    "type": "integer",
+                    "example": 45211983
+                },
+                "verificationLevel": {
+                    "type": "string",
+                    "example": "basic"
+                }
+            }
+        },
+        "internal_transport_http_handlers_sessions.SessionResponse": {
+            "type": "object",
+            "properties": {
+                "accessToken": {
+                    "type": "string",
+                    "example": "alskdjfhao874q48toa8wgfq76g49qfg"
+                },
+                "accessTokenExpiresAt": {
+                    "type": "string",
+                    "example": "2026-03-02T06:31:43Z"
+                },
+                "refreshToken": {
+                    "type": "string",
+                    "example": "ahusdfigao87w478qr8gaogw84g"
+                },
+                "refreshTokenExpiresAt": {
+                    "type": "string",
+                    "example": "2026-03-02T06:31:43Z"
+                },
+                "sessionId": {
+                    "type": "string",
+                    "example": "06fd3021-b659-44e2-b86c-d45ec3fc75ac"
+                }
+            }
+        },
+        "internal_transport_http_handlers_sessions.deleteSessionResponse": {
+            "type": "object",
+            "properties": {
+                "sessionId": {
+                    "type": "string",
+                    "example": "06fd3021-b659-44e2-b86c-d45ec3fc75ac"
+                }
+            }
+        },
+        "internal_transport_http_handlers_sessions.listSessionsResponse": {
+            "type": "object",
+            "properties": {
+                "sessions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_transport_http_handlers_sessions.sessionItem"
+                    }
+                }
+            }
+        },
+        "internal_transport_http_handlers_sessions.refreshSessionRequest": {
+            "type": "object",
+            "required": [
+                "refreshToken"
+            ],
+            "properties": {
+                "refreshToken": {
+                    "type": "string",
+                    "example": "jahsbduaywefuabvkufviuawye"
+                }
+            }
+        },
+        "internal_transport_http_handlers_sessions.refreshSessionResponse": {
+            "type": "object",
+            "properties": {
+                "session": {
+                    "$ref": "#/definitions/internal_transport_http_handlers_sessions.SessionResponse"
+                }
+            }
+        },
+        "internal_transport_http_handlers_sessions.sessionItem": {
+            "type": "object",
+            "properties": {
+                "agent": {
+                    "type": "string",
+                    "example": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.3.1 Safari/605.1.15"
+                },
+                "browser": {
+                    "type": "string",
+                    "example": "Safari 26.3.1"
+                },
+                "createdAt": {
+                    "description": "CreatedAt is when this login began. It survives token refreshes, which\nreplace the session row.",
+                    "type": "string",
+                    "example": "2026-03-02T06:31:43Z"
+                },
+                "device": {
+                    "type": "string",
+                    "example": "Intel Mac OS X 10_15_7"
+                },
+                "ip": {
+                    "type": "string",
+                    "example": "156.88.90.111"
+                },
+                "lastActivityAt": {
+                    "description": "LastActivityAt is the last token refresh, so it trails the user's real\nlast request by at most one access-token lifetime.",
+                    "type": "string",
+                    "example": "2026-03-02T06:31:43Z"
+                },
+                "sessionId": {
+                    "type": "string",
+                    "example": "06fd3021-b659-44e2-b86c-d45ec3fc75ac"
+                }
+            }
+        },
+        "internal_transport_http_handlers_sessions_internals.deleteSessionResponse": {
+            "type": "object",
+            "properties": {
+                "sessionId": {
+                    "type": "string",
+                    "example": "06fd3021-b659-44e2-b86c-d45ec3fc75ac"
+                }
+            }
+        },
+        "internal_transport_http_handlers_sessions_internals.validateSessionRequest": {
+            "type": "object",
+            "required": [
+                "token"
+            ],
+            "properties": {
+                "isExpiredValidationSkip": {
+                    "description": "IsExpiredValidationSkip accepts a token past its expiry. It does not accept\na revoked session: a signed-out, password-rotated or admin-blocked session\nis refused whatever this is set to.",
+                    "type": "boolean",
+                    "example": false
+                },
+                "token": {
+                    "type": "string",
+                    "example": "alsbfiu4aiwfbibouywo3fasy"
+                }
+            }
+        },
+        "internal_transport_http_handlers_sessions_internals.validateSessionResponse": {
+            "type": "object",
+            "properties": {
+                "sessionId": {
+                    "type": "string",
+                    "example": "06fd3021-b659-44e2-b86c-d45ec3fc75ac"
+                },
+                "user": {
+                    "$ref": "#/definitions/internal_transport_http_handlers_sessions_internals.validateSessionUser"
+                }
+            }
+        },
+        "internal_transport_http_handlers_sessions_internals.validateSessionUser": {
+            "type": "object",
+            "properties": {
+                "country": {
+                    "type": "string",
+                    "example": "Ukraine"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 123
+                },
+                "locale": {
+                    "type": "string",
+                    "example": "en_US"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "active"
+                },
+                "timezone": {
+                    "type": "string",
+                    "example": "Europe/Kyiv"
+                },
+                "verificationLevel": {
+                    "type": "string",
+                    "example": "basic"
+                }
+            }
+        },
+        "internal_transport_http_handlers_two_fa.TwoFactorChallengeResponse": {
+            "type": "object",
+            "properties": {
+                "contactMasked": {
+                    "type": "string",
+                    "example": "2026-03-02T06:31:43Z"
+                },
+                "expiresAt": {
+                    "type": "string",
+                    "example": "2026-03-02T06:31:43Z"
+                },
+                "method": {
+                    "type": "string",
+                    "example": "email"
+                },
+                "secret": {
+                    "type": "string",
+                    "example": "suhdfh9w43hr93h32h"
+                },
+                "tokenUUID": {
+                    "type": "string",
+                    "example": "06fd3021-b659-44e2-b86c-d45ec3fc75ac"
+                }
+            }
+        },
+        "internal_transport_http_handlers_two_fa.challengeResendRequest": {
+            "type": "object",
+            "required": [
+                "tokenType",
+                "tokenUUID"
+            ],
+            "properties": {
+                "tokenType": {
+                    "type": "string",
+                    "enum": [
+                        "verify_contact",
+                        "password_reset",
+                        "two_factor_auth"
+                    ],
+                    "example": "password_reset"
+                },
+                "tokenUUID": {
+                    "type": "string",
+                    "example": "06fd3021-b659-44e2-b86c-d45ec3fc75ac"
+                }
+            }
+        },
+        "internal_transport_http_handlers_two_fa_protected.challengeResendRequest": {
+            "type": "object",
+            "required": [
+                "tokenType",
+                "tokenUUID"
+            ],
+            "properties": {
+                "tokenType": {
+                    "type": "string",
+                    "enum": [
+                        "two_factor_setup",
+                        "two_factor_disable"
+                    ],
+                    "example": "two_factor_setup"
+                },
+                "tokenUUID": {
+                    "type": "string",
+                    "example": "06fd3021-b659-44e2-b86c-d45ec3fc75ac"
+                }
+            }
+        },
+        "internal_transport_http_handlers_two_fa_protected.twoFactorActivateRequest": {
+            "type": "object",
+            "required": [
+                "method"
+            ],
+            "properties": {
+                "method": {
+                    "type": "string",
+                    "enum": [
+                        "google",
+                        "email"
+                    ],
+                    "example": "email"
+                }
+            }
+        },
+        "internal_transport_http_handlers_two_fa_protected.twoFactorConfirmRequest": {
+            "type": "object",
+            "required": [
+                "code",
+                "tokenUUID"
+            ],
+            "properties": {
+                "action": {
+                    "type": "string",
+                    "enum": [
+                        "activate",
+                        "deactivate"
+                    ],
+                    "example": "activate"
+                },
+                "code": {
+                    "type": "string",
+                    "maxLength": 12,
+                    "minLength": 4,
+                    "example": "457090"
+                },
+                "tokenUUID": {
+                    "type": "string",
+                    "example": "06fd3021-b659-44e2-b86c-d45ec3fc75ac"
+                }
+            }
+        },
+        "internal_transport_http_handlers_two_fa_protected.twoFactorSettingsResponse": {
+            "type": "object",
+            "properties": {
+                "contactMasked": {
+                    "type": "string",
+                    "example": "te***@gmail.com"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "example": "2026-03-02T06:31:43Z"
+                },
+                "method": {
+                    "type": "string",
+                    "example": "email"
+                }
+            }
+        },
+        "internal_transport_http_handlers_users.contactRequest": {
+            "type": "object",
+            "required": [
+                "type",
+                "value"
+            ],
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "email"
+                    ],
+                    "example": "email"
+                },
+                "value": {
+                    "type": "string",
+                    "example": "test.email@gmail.com"
+                }
+            }
+        },
+        "internal_transport_http_handlers_users.passwordForgotRequest": {
+            "type": "object",
+            "required": [
+                "identifier",
+                "recaptcha"
+            ],
+            "properties": {
+                "identifier": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 5,
+                    "example": "test.email@gmail.com"
+                },
+                "recaptcha": {
+                    "type": "string",
+                    "example": "recaptcha-token-value"
+                }
+            }
+        },
+        "internal_transport_http_handlers_users.passwordForgotResponse": {
+            "type": "object",
+            "properties": {
+                "contactMasked": {
+                    "type": "string",
+                    "example": "te***@gmail.com"
+                },
+                "expiresAt": {
+                    "type": "string",
+                    "example": "2026-03-02T06:31:43Z"
+                },
+                "tokenUUID": {
+                    "type": "string",
+                    "example": "0ea1fb64-7c54-43a6-bff9-f0ae1c0b19dc"
+                }
+            }
+        },
+        "internal_transport_http_handlers_users.passwordResetConfirmRequest": {
+            "type": "object",
+            "required": [
+                "code",
+                "newPassword",
+                "tokenUUID"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "maxLength": 12,
+                    "minLength": 4,
+                    "example": "532110"
+                },
+                "newPassword": {
+                    "type": "string",
+                    "example": "password"
+                },
+                "tokenUUID": {
+                    "type": "string",
+                    "example": "0ea1fb64-7c54-43a6-bff9-f0ae1c0b19dc"
+                }
+            }
+        },
+        "internal_transport_http_handlers_users.userRegisterRequest": {
+            "type": "object",
+            "required": [
+                "contact",
+                "password",
+                "recaptcha"
+            ],
+            "properties": {
+                "contact": {
+                    "$ref": "#/definitions/internal_transport_http_handlers_users.contactRequest"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "password"
+                },
+                "recaptcha": {
+                    "type": "string",
+                    "example": "recaptcha_token_value"
+                }
+            }
+        },
+        "internal_transport_http_handlers_users.userRegisterResponse": {
+            "type": "object",
+            "properties": {
+                "codeDelivered": {
+                    "description": "CodeDelivered is false when registration succeeded but the verification code\ncould not be sent. The account exists and tokenUUID is valid; prompt the user\nto resend via POST /api/v1/2fa/otp/resend rather than telling them to check\nan inbox that will stay empty.",
+                    "type": "boolean",
+                    "example": true
+                },
+                "contactMasked": {
+                    "type": "string",
+                    "example": "te***@gmail.com"
+                },
+                "expiresAt": {
+                    "type": "string",
+                    "example": "2026-03-02T06:31:43Z"
+                },
+                "tokenUUID": {
+                    "type": "string",
+                    "example": "0ea1fb64-7c54-43a6-bff9-f0ae1c0b19dc"
+                }
+            }
+        },
+        "internal_transport_http_handlers_users.verifyContactRequest": {
+            "type": "object",
+            "required": [
+                "code",
+                "tokenUUID"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "maxLength": 12,
+                    "minLength": 4,
+                    "example": "123765"
+                },
+                "tokenUUID": {
+                    "type": "string",
+                    "example": "0ea1fb64-7c54-43a6-bff9-f0ae1c0b19dc"
+                }
+            }
+        },
+        "internal_transport_http_handlers_users_internals.blockUserRequest": {
+            "type": "object",
+            "required": [
+                "userId"
+            ],
+            "properties": {
+                "userId": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "example": 12
+                }
+            }
+        },
+        "internal_transport_http_handlers_users_internals.registerEventRequest": {
+            "type": "object",
+            "required": [
+                "type",
+                "userId"
+            ],
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "register"
+                    ],
+                    "example": "register"
+                },
+                "userId": {
+                    "type": "integer",
+                    "example": 46
+                }
+            }
+        },
+        "internal_transport_http_handlers_users_protected.getProfileLastVerificationRequestResponse": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string",
+                    "example": "2026-03-02T06:31:43Z"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "complete_yes"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "example": "2026-03-02T06:31:43Z"
+                }
+            }
+        },
+        "internal_transport_http_handlers_users_protected.getProfilePrimaryContactResponse": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "example": "verified"
+                },
+                "type": {
+                    "type": "string",
+                    "example": "email"
+                },
+                "value": {
+                    "type": "string",
+                    "example": "test.email@gmail.com"
+                }
+            }
+        },
+        "internal_transport_http_handlers_users_protected.getProfileResponse": {
+            "type": "object",
+            "properties": {
+                "lastUserVerificationRequest": {
+                    "$ref": "#/definitions/internal_transport_http_handlers_users_protected.getProfileLastVerificationRequestResponse"
+                },
+                "locale": {
+                    "type": "string",
+                    "example": "en-US"
+                },
+                "primaryContact": {
+                    "$ref": "#/definitions/internal_transport_http_handlers_users_protected.getProfilePrimaryContactResponse"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "active"
+                },
+                "userNumber": {
+                    "type": "integer",
+                    "example": 53221222
+                },
+                "verificationLevel": {
+                    "type": "string",
+                    "example": "basic"
+                },
+                "verificationLevelMax": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
+        "internal_transport_http_handlers_users_protected.passwordChangeRequest": {
+            "type": "object",
+            "required": [
+                "currentPassword",
+                "newPassword"
+            ],
+            "properties": {
+                "currentPassword": {
+                    "type": "string",
+                    "example": "password"
+                },
+                "newPassword": {
+                    "type": "string",
+                    "example": "new_password"
+                }
+            }
+        },
+        "internal_transport_http_handlers_users_protected.updateProfileRequest": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "example": "c. Dnipro, Ukraine, 01000, Kyiv, Kyivska street, 123"
+                },
+                "dob": {
+                    "type": "string",
+                    "example": "1986-01-02"
+                },
+                "firstName": {
+                    "type": "string",
+                    "example": "Robert"
+                },
+                "lastName": {
+                    "type": "string",
+                    "example": "Vex"
+                },
+                "locale": {
+                    "type": "string",
+                    "example": "en_US"
+                },
+                "timezone": {
+                    "type": "string",
+                    "example": "Europe/Kyiv"
+                }
+            }
+        },
+        "internal_transport_http_handlers_verifications_protected.verificationInitResponse": {
+            "type": "object",
+            "properties": {
+                "providerData": {
+                    "description": "This is a placeholder for any additional data that may be returned by the kyc provider.",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "example": {
+                        "form_url": "https://kyc-forms-new.amlbot.com/qbcyr943yvr83qyt93y9y49y8v39y49yv94"
+                    }
+                }
+            }
+        },
+        "internal_transport_http_handlers_verifications_webhooks.amlBotApplicantWebhookRequest": {
+            "type": "object",
+            "required": [
+                "external_applicant_id"
+            ],
+            "properties": {
+                "dob": {
+                    "type": "string",
+                    "example": "1986-01-02"
+                },
+                "external_applicant_id": {
+                    "type": "string",
+                    "example": "iabsf7gw47wafaih3fwfhi4"
+                },
+                "first_name": {
+                    "type": "string",
+                    "example": "Robert"
+                },
+                "last_name": {
+                    "type": "string",
+                    "example": "Vex"
+                }
+            }
+        },
+        "internal_transport_http_handlers_verifications_webhooks.amlBotWebhookRequest": {
+            "type": "object",
+            "required": [
+                "applicant",
+                "status",
+                "type"
+            ],
+            "properties": {
+                "applicant": {
+                    "$ref": "#/definitions/internal_transport_http_handlers_verifications_webhooks.amlBotApplicantWebhookRequest"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "pending",
+                        "completed"
+                    ],
+                    "example": "completed"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "VERIFICATION_STATUS_CHANGED",
+                        "VERIFICATION_COMPLETED"
+                    ],
+                    "example": "VERIFICATION_COMPLETED"
+                },
+                "verified": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "user-service_internal_transport_http_handlers_sessions.SessionResponse": {
+            "type": "object",
+            "properties": {
+                "accessToken": {
+                    "type": "string",
+                    "example": "alskdjfhao874q48toa8wgfq76g49qfg"
+                },
+                "accessTokenExpiresAt": {
+                    "type": "string",
+                    "example": "2026-03-02T06:31:43Z"
+                },
+                "refreshToken": {
+                    "type": "string",
+                    "example": "ahusdfigao87w478qr8gaogw84g"
+                },
+                "refreshTokenExpiresAt": {
+                    "type": "string",
+                    "example": "2026-03-02T06:31:43Z"
+                },
+                "sessionId": {
+                    "type": "string",
+                    "example": "06fd3021-b659-44e2-b86c-d45ec3fc75ac"
+                }
+            }
+        },
+        "user-service_internal_transport_http_handlers_two_fa.TwoFactorChallengeResponse": {
+            "type": "object",
+            "properties": {
+                "contactMasked": {
+                    "type": "string",
+                    "example": "2026-03-02T06:31:43Z"
+                },
+                "expiresAt": {
+                    "type": "string",
+                    "example": "2026-03-02T06:31:43Z"
+                },
+                "method": {
+                    "type": "string",
+                    "example": "email"
+                },
+                "secret": {
+                    "type": "string",
+                    "example": "suhdfh9w43hr93h32h"
+                },
+                "tokenUUID": {
+                    "type": "string",
+                    "example": "06fd3021-b659-44e2-b86c-d45ec3fc75ac"
+                }
+            }
+        }
+    }
+}

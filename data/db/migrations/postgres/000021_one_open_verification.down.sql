@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS idx_verifications_one_open_per_user_provider;
